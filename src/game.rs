@@ -1,7 +1,4 @@
-use std::fmt;
-use std::iter;
-use rand;
-
+use crate::prelude::*;
 
 #[derive(PartialEq, Debug, Clone, Copy)]
 pub enum Direction {
@@ -14,16 +11,21 @@ pub enum Direction {
 impl Direction {
     fn to_vector(self) -> (isize, isize) {
         match self {
-            Direction::Up    => (0, -1),
+            Direction::Up => (0, -1),
             Direction::Right => (1, 0),
-            Direction::Down  => (0, 1),
-            Direction::Left  => (-1, 0)
+            Direction::Down => (0, 1),
+            Direction::Left => (-1, 0),
         }
     }
 
     // Haskell succ/pred???
     fn all_directions<'r>() -> Vec<Direction> {
-        vec![Direction::Up, Direction::Right, Direction::Down, Direction::Left]
+        vec![
+            Direction::Up,
+            Direction::Right,
+            Direction::Down,
+            Direction::Left,
+        ]
     }
 }
 
@@ -33,7 +35,7 @@ pub struct Traversal {
 
     idx: usize,
     max_idx: usize,
-    size: usize
+    size: usize,
 }
 
 impl Traversal {
@@ -47,9 +49,12 @@ impl Traversal {
         if y == 1 {
             ys.reverse()
         }
-        Traversal { xs: xs.to_vec(), ys: ys.to_vec(),
-                    idx: 0, max_idx: size * size,
-                    size: size,
+        Traversal {
+            xs: xs.to_vec(),
+            ys: ys.to_vec(),
+            idx: 0,
+            max_idx: size * size,
+            size,
         }
     }
 }
@@ -60,8 +65,8 @@ impl Iterator for Traversal {
         if self.idx == self.max_idx {
             None
         } else {
-            let ret = (self.xs[self.idx / self.size],
-                       self.ys[self.idx % self.size]);
+            let ret =
+                (self.xs[self.idx / self.size], self.ys[self.idx % self.size]);
             self.idx += 1;
             Some(ret)
         }
@@ -75,13 +80,18 @@ pub struct Tile {
     pub value: isize,
 
     pub prev_pos: Option<(usize, usize)>,
-    pub merged_from: Option<((usize,usize), (usize, usize))>
+    pub merged_from: Option<((usize, usize), (usize, usize))>,
 }
 
 impl Tile {
     pub fn new((x, y): (usize, usize), value: isize) -> Tile {
-        Tile { x: x, y: y, value: value,
-               prev_pos: None, merged_from: None }
+        Tile {
+            x,
+            y,
+            value,
+            prev_pos: None,
+            merged_from: None,
+        }
     }
 
     pub fn save_position(&mut self) {
@@ -96,7 +106,6 @@ impl Tile {
     pub fn pos(&self) -> (usize, usize) {
         (self.x, self.y)
     }
-
 }
 
 impl fmt::Display for Tile {
@@ -119,11 +128,10 @@ impl fmt::Display for Tile {
 //
 //
 
-
 #[derive(PartialEq, Debug, Clone)]
 pub struct Grid {
     pub size: usize,
-    pub cells: Vec<Vec<Option<Tile>>>
+    pub cells: Vec<Vec<Option<Tile>>>,
 }
 
 impl Grid {
@@ -135,8 +143,8 @@ impl Grid {
             cells.push(row);
         }
         Grid {
-            size: size,
-            cells: cells
+            size,
+            cells,
         }
     }
 
@@ -145,9 +153,7 @@ impl Grid {
 
         match cells.len() {
             0 => None,
-            n => {
-                Some(cells[rand::random::<usize>() % n])
-            }
+            n => Some(cells[rand::random::<usize>() % n]),
         }
     }
 
@@ -156,14 +162,16 @@ impl Grid {
 
         self.each_cell(|x, y, tile| {
             if tile.is_none() {
-                cells.push((x,y))
+                cells.push((x, y))
             }
         });
         cells
     }
 
     pub fn each_cell<F>(&self, mut callback: F)
-        where F: FnMut(usize, usize, Option<&Tile>) {
+    where
+        F: FnMut(usize, usize, Option<&Tile>),
+    {
         for x in 0..self.size {
             for y in 0..self.size {
                 callback(x, y, self.cells[x][y].as_ref())
@@ -172,14 +180,15 @@ impl Grid {
     }
 
     pub fn each_mut_cell<F>(&mut self, mut callback: F)
-        where F: FnMut(usize, usize, &mut Option<Tile>)  {
+    where
+        F: FnMut(usize, usize, &mut Option<Tile>),
+    {
         for x in 0..self.size {
             for y in 0..self.size {
                 callback(x, y, &mut self.cells[x][y])
             }
         }
     }
-
 
     pub fn cells_available(&self) -> bool {
         self.available_cells().len() != 0
@@ -220,13 +229,12 @@ impl Grid {
             for cell in col.iter() {
                 match cell.clone() {
                     Some(t) => print!("{}\t", t),
-                    None    => print!("[    ]\t"),
+                    None => print!("[    ]\t"),
                 }
             }
             print!("");
         }
     }
-
 }
 
 #[derive(Debug)]
@@ -236,16 +244,18 @@ pub struct GameManager {
 
     pub grid: Grid,
     pub score: usize,
-    pub playing: bool
+    pub playing: bool,
 }
 
 impl GameManager {
     pub fn new(size: usize) -> GameManager {
-        GameManager { size: size,
-                      start_tiles: 2,
-                      grid: Grid::new(size),
-                      score: 0,
-                      playing: false }
+        GameManager {
+            size,
+            start_tiles: 2,
+            grid: Grid::new(size),
+            score: 0,
+            playing: false,
+        }
     }
 
     pub fn setup(&mut self) {
@@ -256,8 +266,13 @@ impl GameManager {
 
     pub fn add_random_tile(&mut self) {
         if self.grid.cells_available() {
-            let value = if rand::random::<usize>() % 10 < 9 { 2 } else { 4 };
-            let tile = Tile::new(self.grid.random_available_cell().unwrap(), value);
+            let value = if rand::random::<usize>() % 10 < 9 {
+                2
+            } else {
+                4
+            };
+            let tile =
+                Tile::new(self.grid.random_available_cell().unwrap(), value);
             print!("add new at {:?}, val = {:?}", tile.pos(), value);
             self.grid.insert_tile(tile);
         }
@@ -276,14 +291,14 @@ impl GameManager {
                     t.merged_from = None;
                     t.save_position();
                     //*tile = Some(t);
-                },
-                None => ()
+                }
+                None => (),
             }
         })
     }
 
     pub fn move_tile(&mut self, tile: Tile, (x, y): (usize, usize)) {
-        println!("move {:?} to {:?}", tile.pos(), (x,y));
+        println!("move {:?} to {:?}", tile.pos(), (x, y));
         let mut tile = tile;
         self.grid.cells[tile.x][tile.y] = None;
         tile.update_position((x, y));
@@ -301,12 +316,22 @@ impl GameManager {
             let tile_opt = self.grid.cell_content((x, y));
             match tile_opt {
                 Some(mut tile) => {
-                    let (farthest_pos, next_pos) = self.find_farthest_position((x,y), dir.to_vector());
+                    let (farthest_pos, next_pos) =
+                        self.find_farthest_position((x, y), dir.to_vector());
                     let next_opt = self.grid.cell_content(next_pos);
                     match next_opt {
-                        Some(ref next) if next.value == tile.value && next.merged_from.is_none() => {
-                            let mut merged = Tile::new(next_pos, tile.value * 2);
-                            println!("{:?}, {:?} merged to {:?}", tile.pos(), next_pos, next_pos);
+                        Some(ref next)
+                            if next.value == tile.value
+                                && next.merged_from.is_none() =>
+                        {
+                            let mut merged =
+                                Tile::new(next_pos, tile.value * 2);
+                            println!(
+                                "{:?}, {:?} merged to {:?}",
+                                tile.pos(),
+                                next_pos,
+                                next_pos
+                            );
                             merged.merged_from = Some((tile.pos(), next.pos()));
 
                             self.grid.insert_tile(merged);
@@ -326,7 +351,7 @@ impl GameManager {
                         }
                     }
                 }
-                _ => ()
+                _ => (),
             }
         }
 
@@ -348,46 +373,52 @@ impl GameManager {
         Traversal::new(self.size, dir)
     }
 
-    fn find_farthest_position(&self, (x, y): (usize, usize), (dx, dy): (isize, isize)) -> ((usize, usize), (usize, usize)) {
+    fn find_farthest_position(
+        &self,
+        (x, y): (usize, usize),
+        (dx, dy): (isize, isize),
+    ) -> ((usize, usize), (usize, usize)) {
         let (mut prev_x, mut prev_y) = (x as isize, y as isize);
         let (mut next_x, mut next_y) = (prev_x + dx, prev_y + dy);
 
-        while self.grid.within_bounds((next_x as usize, next_y as usize)) &&
-              self.grid.cell_available((next_x as usize, next_y as usize)) {
-                  prev_x = next_x;
-                  prev_y = next_y;
-                  next_x = prev_x + dx;
-                  next_y =  prev_y + dy;
+        while self.grid.within_bounds((next_x as usize, next_y as usize))
+            && self.grid.cell_available((next_x as usize, next_y as usize))
+        {
+            prev_x = next_x;
+            prev_y = next_y;
+            next_x = prev_x + dx;
+            next_y = prev_y + dy;
         }
         // (farthest, next)
-        ((prev_x as usize, prev_y as usize),
-         (next_x as usize, next_y as usize))
+        (
+            (prev_x as usize, prev_y as usize),
+            (next_x as usize, next_y as usize),
+        )
     }
 
     fn tile_matches_available(&self) -> bool {
         for x in 0..self.size {
             for y in 0..self.size {
-                match self.grid.cell_content((x,y)) {
+                match self.grid.cell_content((x, y)) {
                     Some(tile) => {
                         for dir in Direction::all_directions().iter() {
                             let (dx, dy) = dir.to_vector();
                             let nx = (x as isize + dx) as usize;
                             let ny = (y as isize + dy) as usize;
                             match self.grid.cell_content((nx, ny)) {
-                                Some(ref other) if other.value == tile.value => {
+                                Some(ref other)
+                                    if other.value == tile.value =>
+                                {
                                     return true;
                                 }
-                                _ => ()
+                                _ => (),
                             }
                         }
-
                     }
-                    _ => ()
+                    _ => (),
                 }
-
             }
         }
         false
     }
-
 }

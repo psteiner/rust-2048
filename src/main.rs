@@ -1,15 +1,30 @@
 #![crate_name = "game2048"]
-
-extern crate sdl2;
-extern crate sdl2_ttf;
-extern crate sdl2_gfx;
-extern crate rand;
-
-use std::env;
-
 mod ui;
 mod game;
-use std::str::FromStr;
+
+mod prelude {
+    pub use std::env;
+    pub use std::fmt;
+    pub use std::iter;
+    pub use std::path::Path;
+    pub use std::str::FromStr;
+    
+    pub use rand::prelude::*;
+    pub use sdl2::render::WindowCanvas;
+    
+    pub use sdl2::event::Event;
+    pub use sdl2::gfx::*;
+    pub use sdl2::keyboard::Keycode;
+    pub use sdl2::pixels::Color;
+    pub use sdl2::rect::Rect;
+    pub use sdl2::rwops::*;
+    pub use sdl2::ttf::*;
+    
+    pub use crate::game::GameManager;
+    pub use crate::ui::*;
+}
+
+use prelude::*;
 
 fn main() {
     let args = env::args().collect::<Vec<String>>();
